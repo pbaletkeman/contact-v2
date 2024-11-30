@@ -3,6 +3,8 @@ import bodyParser from "body-parser";
 
 import * as db from "../db/index.js";
 import Address from "../models/address.js";
+import Contact from "../models/contact.js";
+import { insertRecord as addressInsert } from "./address.js";
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -18,9 +20,9 @@ var jsonParser = bodyParser.json();
 // const result = await db.query("SELECT $1::text as message", ["Hello world!"]);
 // console.log(result.rows[0]);
 
-const TABLE_NAME = "address";
+const TABLE_NAME = "contact";
 
-// await initTable();
+await initTable();
 
 // await seedTable();
 
@@ -55,14 +57,14 @@ router.get("/:id", async function (req, res) {
 });
 
 router.post("/", jsonParser, async function (req, res) {
-  // console.log("POST request received");
+  console.log("POST request received");
   // console.log("Req");
   // console.log(req.body);
   const contact = new Contact().createFromJSON(req.body);
-  // console.log(contact.pretty());
   const inserted = await insertRecord(contact);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(inserted));
+  // res.end();
 });
 
 router.put("/", jsonParser, async function (req, res) {
@@ -145,32 +147,32 @@ async function updateRecord(address) {
   return res.rows;
 }
 
-async function insertRecord(address) {
+async function insertRecord(contact) {
   let sqlString = [];
   let sqlValues = [];
-  if (address.contactId) {
+  if (contact.contactId) {
     sqlString.push("contactId");
-    sqlValues.push(address.contactId);
+    sqlValues.push(contact.contactId);
   }
-  if (address.firstName) {
+  if (contact.firstName) {
     sqlString.push("firstname");
-    sqlValues.push(address.firstName.trim());
+    sqlValues.push(contact.firstName.trim());
   }
-  if (address.lastName) {
+  if (contact.lastName) {
     sqlString.push("lastname");
-    sqlValues.push(address.lastName.trim());
+    sqlValues.push(contact.lastName.trim());
   }
-  if (address.middleName) {
+  if (contact.middleName) {
     sqlString.push("middlename");
-    sqlValues.push(address.middleName.trim());
+    sqlValues.push(contact.middleName.trim());
   }
-  if (address.title) {
+  if (contact.title) {
     sqlString.push("title");
-    sqlValues.push(address.title.trim());
+    sqlValues.push(contact.title.trim());
   }
-  if (address.birthDate) {
+  if (contact.birthDate) {
     sqlString.push("birthdate");
-    sqlValues.push(address.birthDate.trim());
+    sqlValues.push(contact.birthDate.trim());
   }
   let values = "";
   for (let i = 1; i <= sqlValues.length; i++) {
@@ -184,21 +186,26 @@ async function insertRecord(address) {
     `") VALUES (` +
     values +
     `) RETURNING * `;
-
   const res = await db.query(sqlFields, sqlValues);
-  return res.rows;
+  let insertedAdds = [];
+  const newContactId = res.rows[0].contactid;
+  for (let i = 0; i < contact.addresses.length; i++) {
+    contact.addresses[i].contactId = newContactId;
+    insertedAdds.push(await addressInsert(contact.addresses[i]));
+  }
+  res.rows[0].addresses = insertedAdds;
+  return res.rows[0];
 }
 
 async function initTable() {
   const sqlString = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME}
   (
-      addressid SERIAL PRIMARY KEY,
-      contactid bigInt,
+      contactid SERIAL PRIMARY KEY,
       birthdate timestamp without time zone,
       title character(4),
       firstname character varying(50),
       lastname character varying(50),
-      middlename character varying(50),
+      middlename character varying(50)
   )`;
   const res = await db.query(sqlString);
   return res.rows;

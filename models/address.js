@@ -104,7 +104,6 @@ class Address {
     address.province = body.province ? body.province : null;
     address.postalCode = body.postalcode ? body.postalcode : null;
     address.country = body.country ? body.country : null;
-    address.title = body.title ? body.title : null;
     address.phone = body.phone ? body.phone : null;
     address.email = body.email ? body.email : null;
 

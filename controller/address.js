@@ -248,6 +248,8 @@ async function initTable() {
   return res.rows;
 }
 
+export { insertRecord };
+
 // async function seedTable() {
 //   for (let i = 0; i < 10; i++) {
 //     const sqlString = `INSERT INTO ${TABLE_NAME} ("firstname", "lastname", "middlename", "street1", "street2", "city", "province", "postalcode", "country", "title", "phone", "birthdate", "email")

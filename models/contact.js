@@ -76,32 +76,27 @@ class Contact {
     contact.middleName = body.middleName ? body.middleName : null;
     contact.birthDate = body.birthDate ? body.birthDate : null;
     contact.addresses = body.addresses
-      ? parseAddressJSON(body.addresses)
+      ? this.parseAddressJSON(body.addresses)
       : null;
-
     return contact;
   };
 
   parseAddressJSON = function (addresses) {
     let adds = [];
     if (addresses && Array.isArray(addresses) && addresses.length > 0) {
-      for (let a in addresses) {
-        const address = Address().createFromJSON(a);
+      addresses.forEach((a) => {
+        const address = new Address().createFromJSON(a);
         adds.push(address);
-      }
+      });
     }
     return adds;
   };
 
   pretty = function () {
-    let adds = "[";
+    let adds = [];
     this.addresses.forEach((element) => {
-      adds += '"' + element.pretty() + '",';
+      adds.push(JSON.stringify(element.pretty()));
     });
-    if (adds.endsWith(",")) {
-      adds = adds.substring(0, adds.length - 1);
-    }
-    adds + "]";
     let str =
       '{"contact": {"contactId" : "' +
       this.contactId +
@@ -115,10 +110,10 @@ class Contact {
       this.title +
       '", "birthDate" : "' +
       this.birthDate +
-      '", "addresses" : "' +
+      '", "addresses" : [' +
       adds +
-      '"}}';
-    return JSON.parse(str.replaceAll(null, "null"));
+      "]}}";
+    return str.replaceAll(null, "null");
   };
 }
 
