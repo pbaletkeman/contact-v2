@@ -7,6 +7,7 @@ import Contact from "../models/contact.js";
 import {
   insertRecord as addressInsert,
   TABLE_NAME as addressTable,
+  updateRecord as addressUpdate,
 } from "./address.js";
 
 // create a new express-promise-router
@@ -30,7 +31,7 @@ await initTable();
 // await seedTable();
 
 router.get("/sorted/:sortField?/:direction?", async function (req, res) {
-  // console.log("GET request received");
+  console.log("GET request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   const rows = await getRecords(
     null,
@@ -41,7 +42,7 @@ router.get("/sorted/:sortField?/:direction?", async function (req, res) {
 });
 
 router.get("/:ids?/:sortField?/:direction?", async function (req, res) {
-  // console.log("GET request received");
+  console.log("GET request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   const rows = await getRecords(
     req.params["ids"],
@@ -52,7 +53,7 @@ router.get("/:ids?/:sortField?/:direction?", async function (req, res) {
 });
 
 router.get("/:id", async function (req, res) {
-  // console.log("GET /:id request received");
+  console.log("GET /:id request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   // res.end(req.params["id"]);
   const row = await getRecord(req.params["id"]);
@@ -71,6 +72,7 @@ router.post("/", jsonParser, async function (req, res) {
 });
 
 router.put("/", jsonParser, async function (req, res) {
+  console.log("PUT request received");
   const contact = new Contact().createFromJSON(req.body);
   const updated = await updateRecord(contact);
   res.writeHead(200, { "Content-Type": "application/json" });
@@ -78,7 +80,7 @@ router.put("/", jsonParser, async function (req, res) {
 });
 
 router.delete("/:ids", async function (req, res) {
-  // console.log("DELETE request received");
+  console.log("DELETE request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   const row = await deleteRecords(req.params["ids"]);
   res.end(JSON.stringify(row));
@@ -87,8 +89,13 @@ router.delete("/:ids", async function (req, res) {
 async function deleteRecords(ids) {
   const sqlString =
     `DELETE FROM ${TABLE_NAME} WHERE "contactid" in (` + ids + `)`;
-  const res = await db.query(sqlString);
-  return res.rows;
+  const res1 = await db.query(sqlString);
+  sqlString = `DELETE FROM ${addressTable} WHERE "contactid" in (` + ids + `)`;
+  const res2 = await db.query(sqlString);
+  let x = {};
+  x.res1 = res1.rows;
+  x.res2 = res2.rows;
+  return x;
 }
 
 async function getRecord(id) {
@@ -178,43 +185,50 @@ async function getRecords(ids, sortField, sortDirection) {
   return results;
 }
 
-async function updateRecord(address) {
+async function updateRecord(contact) {
   let sqlString = `UPDATE ${TABLE_NAME} set `;
   let sqlValues = [];
   let i = 0;
-  if (address.firstName) {
+  if (contact.firstName) {
     i++;
     sqlString += `"firstname" = $` + i + `,`;
-    sqlValues.push(address.firstName.trim());
+    sqlValues.push(contact.firstName.trim());
   }
-  if (address.lastName) {
+  if (contact.lastName) {
     i++;
     sqlString += `"lastname" = $` + i + `,`;
-    sqlValues.push(address.lastName.trim());
+    sqlValues.push(contact.lastName.trim());
   }
-  if (address.middleName) {
+  if (contact.middleName) {
     i++;
     sqlString += `"middlename" = $` + i + `,`;
-    sqlValues.push(address.middleName.trim());
+    sqlValues.push(contact.middleName.trim());
   }
-  if (address.title) {
+  if (contact.title) {
     i++;
     sqlString += `"title" = $` + i + `,`;
-    sqlValues.push(address.title.trim());
+    sqlValues.push(contact.title.trim());
   }
-  if (address.birthDate) {
+  if (contact.birthDate) {
     i++;
     sqlString += `"birthdate" = $` + i + `,`;
-    sqlValues.push(address.birthDate.trim());
+    sqlValues.push(new Date(contact.birthDate.trim()));
   }
   i++;
   sqlString =
     sqlString.substring(0, sqlString.length - 1) +
-    ` WHERE addressId = $` +
+    ` WHERE contactid = $` +
     i +
     ` RETURNING * `;
-  sqlValues.push(address.addressId);
-  const res = await db.query(sqlString, sqlValues, address.addressId);
+  sqlValues.push(contact.contactId);
+  let res = await db.query(sqlString, sqlValues, contact.contactId);
+  let updateAdds = [];
+  if (contact.addresses && Array.isArray(contact.addresses)) {
+    for (let i = 0; i < contact.addresses.length; i++) {
+      updateAdds.push(await addressUpdate(contact.addresses[i]));
+    }
+  }
+  res.rows[0].addresses = updateAdds;
   return res.rows;
 }
 

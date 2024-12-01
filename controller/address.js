@@ -25,7 +25,7 @@ await initTable();
 // await seedTable();
 
 router.get("/sorted/:sortField?/:direction?", async function (req, res) {
-  // console.log("GET request received");
+  console.log("GET request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   const rows = await getRecords(
     null,
@@ -36,7 +36,7 @@ router.get("/sorted/:sortField?/:direction?", async function (req, res) {
 });
 
 router.get("/:ids?/:sortField?/:direction?", async function (req, res) {
-  // console.log("GET request received");
+  console.log("GET request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   const rows = await getRecords(
     req.params["ids"],
@@ -47,7 +47,7 @@ router.get("/:ids?/:sortField?/:direction?", async function (req, res) {
 });
 
 router.get("/:id", async function (req, res) {
-  // console.log("GET /:id request received");
+  console.log("GET /:id request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   // res.end(req.params);
   const row = await getRecord(req.params["id"]);
@@ -55,7 +55,7 @@ router.get("/:id", async function (req, res) {
 });
 
 router.post("/", jsonParser, async function (req, res) {
-  // console.log("POST request received");
+  console.log("POST request received");
   // console.log("Req");
   // console.log(req.body);
   const address = new Address().createFromJSON(req.body);
@@ -65,6 +65,7 @@ router.post("/", jsonParser, async function (req, res) {
 });
 
 router.put("/", jsonParser, async function (req, res) {
+  console.log("PUT request received");
   const address = new Address().createFromJSON(req.body);
   const updated = await updateRecord(address);
   res.writeHead(200, { "Content-Type": "application/json" });
@@ -72,7 +73,7 @@ router.put("/", jsonParser, async function (req, res) {
 });
 
 router.delete("/:ids", async function (req, res) {
-  // console.log("DELETE request received");
+  console.log("DELETE request received");
   res.writeHead(200, { "Content-Type": "application/json" });
   const row = await deleteRecords(req.params["ids"]);
   res.end(JSON.stringify(row));
@@ -108,11 +109,11 @@ async function updateRecord(address) {
   let sqlString = `UPDATE ${TABLE_NAME} set `;
   let sqlValues = [];
   let i = 0;
-  if (address.addressId) {
-    i++;
-    sqlString += `"addressid" = $` + i + `,`;
-    sqlValues.push(address.addressId);
-  }
+  // if (address.addressId) {
+  //   i++;
+  //   sqlString += `"addressid" = $` + i + `,`;
+  //   sqlValues.push(address.addressId);
+  // }
   if (address.contactId) {
     i++;
     sqlString += `"contactid" = $` + i + `,`;
@@ -165,9 +166,10 @@ async function updateRecord(address) {
     ` WHERE addressId = $` +
     i +
     ` RETURNING * `;
+  // console.log(address);
   sqlValues.push(address.addressId);
   const res = await db.query(sqlString, sqlValues, address.addressId);
-  return res.rows;
+  return res.rows[0];
 }
 
 async function insertRecord(address) {
@@ -248,7 +250,7 @@ async function initTable() {
   return res.rows;
 }
 
-export { insertRecord, TABLE_NAME };
+export { insertRecord, updateRecord, TABLE_NAME };
 
 // async function seedTable() {
 //   for (let i = 0; i < 10; i++) {

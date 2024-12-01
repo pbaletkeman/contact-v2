@@ -70,11 +70,13 @@ class Contact {
       return new Contact();
     }
     let contact = new Contact();
-    contact.contactId = body.contactId ? body.contactId : null;
-    contact.firstName = body.firstName ? body.firstName : null;
-    contact.lastName = body.lastName ? body.lastName : null;
-    contact.middleName = body.middleName ? body.middleName : null;
-    contact.birthDate = body.birthDate ? body.birthDate : null;
+    // console.log("body");
+    // console.log(body);
+    contact.contactId = body.contactid ? body.contactid : null;
+    contact.firstName = body.firstname ? body.firstname : null;
+    contact.lastName = body.lastname ? body.lastname : null;
+    contact.middleName = body.middlename ? body.middlename : null;
+    contact.birthDate = body.birthdate ? body.birthdate : null;
     contact.addresses = body.addresses
       ? this.parseAddressJSON(body.addresses)
       : null;
@@ -85,7 +87,7 @@ class Contact {
     let adds = [];
     if (addresses && Array.isArray(addresses) && addresses.length > 0) {
       addresses.forEach((a) => {
-        const address = new Address().createFromJSON(a);
+        const address = new Address().createFromJSON(a.address);
         adds.push(address);
       });
     }
