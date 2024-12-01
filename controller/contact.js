@@ -4,7 +4,10 @@ import bodyParser from "body-parser";
 import * as db from "../db/index.js";
 import Address from "../models/address.js";
 import Contact from "../models/contact.js";
-import { insertRecord as addressInsert } from "./address.js";
+import {
+  insertRecord as addressInsert,
+  TABLE_NAME as addressTable,
+} from "./address.js";
 
 // create a new express-promise-router
 // this has the same API as the normal express router except
@@ -93,9 +96,25 @@ async function getRecord(id) {
 }
 
 async function getRecords(ids, sortField, sortDirection) {
-  let sqlString = `SELECT "contactid", "firstname", "lastname", "middlename", "street1", "street2", "city", "province", "postalcode", "country", "title", "phone", "birthdate", "email" FROM ${TABLE_NAME} WHERE 1=1 `;
+  let sqlString = `SELECT 
+    ${TABLE_NAME}."contactid", 
+    ${TABLE_NAME}."firstname", 
+    ${TABLE_NAME}."lastname", 
+    ${TABLE_NAME}."middlename", 
+    ${TABLE_NAME}."birthdate", 
+    ${addressTable}."addressid",
+    ${addressTable}."contactid",
+    ${addressTable}."province",
+    ${addressTable}."country",
+    ${addressTable}."phone",
+    ${addressTable}."postalcode",
+    ${addressTable}."street1",
+    ${addressTable}."street2",
+    ${addressTable}."city",
+    ${addressTable}."email"
+  FROM ${TABLE_NAME}, ${addressTable} WHERE ${TABLE_NAME}."contactid" = ${addressTable}."contactid" `;
   if (ids) {
-    sqlString += ` AND "contactid" in (` + ids + ") ";
+    sqlString += ` AND ${TABLE_NAME}."contactid" in (` + ids + ") ";
   }
   if (sortField) {
     sqlString += ` ORDER BY "` + sortField + `" `;
@@ -104,7 +123,59 @@ async function getRecords(ids, sortField, sortDirection) {
     sqlString += sortDirection;
   }
   const res = await db.query(sqlString);
-  return res.rows;
+  let results = [];
+  let contactId = null;
+  let adds = [];
+  let contact = new Contact();
+  let ad = new Address();
+  for (let i = 0; i < res.rows.length; i++) {
+    if (contactId == res.rows[i].contactid) {
+      ad = new Address();
+      ad.addressId = res.rows[i].addressid;
+      ad.city = res.rows[i].city;
+      ad.contactId = contactId;
+      ad.country = res.rows[i].country;
+      ad.email = res.rows[i].email;
+      ad.phone = res.rows[i].phone;
+      ad.postalCode = res.rows[i].postalcode;
+      ad.province = res.rows[i].province;
+      ad.street1 = res.rows[i].street1;
+      ad.street2 = res.rows[i].street2;
+      adds.push(ad.pretty());
+    } else {
+      ad = new Address();
+      if (contactId != null) {
+        let tempContact = JSON.parse(contact.pretty());
+        tempContact.contact.addresses = adds;
+        results.push(tempContact);
+      }
+      contactId = res.rows[i].contactid;
+      contact.contactId = contactId;
+      contact.firstName = res.rows[i].firstname;
+      contact.lastName = res.rows[i].lastname;
+      contact.middleName = res.rows[i].middlename;
+      contact.contactId = res.rows[i].contactid;
+      contact.birthDate = res.rows[i].birthdate;
+      adds = [];
+
+      ad.addressId = res.rows[i].addressid;
+      ad.city = res.rows[i].city;
+      ad.contactId = contactId;
+      ad.country = res.rows[i].country;
+      ad.email = res.rows[i].email;
+      ad.phone = res.rows[i].phone;
+      ad.postalCode = res.rows[i].postalcode;
+      ad.province = res.rows[i].province;
+      ad.street1 = res.rows[i].street1;
+      ad.street2 = res.rows[i].street2;
+      adds.push(ad.pretty());
+    }
+  }
+  let tempContact = JSON.parse(contact.pretty());
+  tempContact.contact.addresses = adds;
+
+  results.push(tempContact);
+  return results;
 }
 
 async function updateRecord(address) {

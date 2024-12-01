@@ -248,7 +248,7 @@ async function initTable() {
   return res.rows;
 }
 
-export { insertRecord };
+export { insertRecord, TABLE_NAME };
 
 // async function seedTable() {
 //   for (let i = 0; i < 10; i++) {

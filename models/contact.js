@@ -94,9 +94,15 @@ class Contact {
 
   pretty = function () {
     let adds = [];
-    this.addresses.forEach((element) => {
-      adds.push(JSON.stringify(element.pretty()));
-    });
+    if (this.addresses) {
+      if (Array.isArray(this.addresses) && this.addresses.length > 0) {
+        this.addresses.forEach((element) => {
+          if (element instanceof Address) {
+            adds.push(JSON.stringify(element.pretty()));
+          }
+        });
+      }
+    }
     let str =
       '{"contact": {"contactId" : "' +
       this.contactId +
