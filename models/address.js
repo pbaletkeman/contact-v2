@@ -106,7 +106,6 @@ class Address {
     address.country = body.country ? body.country : null;
     address.phone = body.phone ? body.phone : null;
     address.email = body.email ? body.email : null;
-
     return address;
   };
 

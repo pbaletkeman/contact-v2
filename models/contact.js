@@ -71,7 +71,7 @@ class Contact {
     }
     let contact = new Contact();
     // console.log("body");
-    // console.log(body);
+    // console.log(body.addresses);
     contact.contactId = body.contactid ? body.contactid : null;
     contact.firstName = body.firstname ? body.firstname : null;
     contact.lastName = body.lastname ? body.lastname : null;
@@ -87,7 +87,7 @@ class Contact {
     let adds = [];
     if (addresses && Array.isArray(addresses) && addresses.length > 0) {
       addresses.forEach((a) => {
-        const address = new Address().createFromJSON(a.address);
+        const address = new Address().createFromJSON(a);
         adds.push(address);
       });
     }
