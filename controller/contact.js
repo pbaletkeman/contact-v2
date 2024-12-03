@@ -8,6 +8,7 @@ import {
   insertRecord as addressInsert,
   TABLE_NAME as addressTable,
   updateRecord as addressUpdate,
+  initTable as createAddTable,
 } from "./address.js";
 
 // create a new express-promise-router
@@ -27,8 +28,9 @@ var jsonParser = bodyParser.json();
 const TABLE_NAME = "contact";
 
 await initTable();
+await createAddTable();
 
-// await seedTable();
+await seedTable();
 
 router.get("/sorted/:sortField?/:direction?", async function (req, res) {
   console.log("GET request received");
@@ -68,7 +70,6 @@ router.post("/", jsonParser, async function (req, res) {
   const inserted = await insertRecord(contact);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(inserted));
-  // res.end();
 });
 
 router.put("/", jsonParser, async function (req, res) {
@@ -296,11 +297,25 @@ async function initTable() {
   return res.rows;
 }
 
-// async function seedTable() {
-//   for (let i = 0; i < 10; i++) {
-//     const sqlString = `INSERT INTO ${TABLE_NAME} ("firstname", "lastname", "middlename", "street1", "street2", "city", "province", "postalcode", "country", "title", "phone", "birthdate", "email")
-//     VALUES ('firstName${i}', 'lastName${i}', 'middleName${i}', 'street1${i}', 'street2${i}', 'city${i}', 'pr${i}', 'postalCode${i}', 'count${i}', 'mr${i}', 'phone${i}', '2024-12-01', 'email${i}');`;
-//     // console.log(sqlString);
-//     const res = await db.query(sqlString);
-//   }
-// }
+async function seedTable() {
+  for (let i = 0; i < 10; i++) {
+    let sqlString = `INSERT INTO ${TABLE_NAME} ("firstname", "lastname", "middlename", "birthdate")
+      VALUES ('firstName${i}', 'lastName${i}', 'middleName${i}', '2024-12-01') RETURNING contactid;`;
+
+    const res1 = await db.query(sqlString);
+
+    sqlString = `INSERT INTO ${addressTable} ("contactid", "street1", 
+      "street2", "city", "province", "postalcode", 
+      "country", "phone", "email") VALUES ('${res1.rows[0].contactid}', 
+      'street1${i}', 'street2${i}', 'city${i}', 'pr${i}', 'post${i}', 'coun${i}', 'phone${i}', 'email${i}')`;
+
+    const res2 = await db.query(sqlString);
+
+    sqlString = `INSERT INTO ${addressTable} ("contactid", "street1", 
+    "street2", "city", "province", "postalcode", 
+    "country", "phone", "email") VALUES ('${res1.rows[0].contactid}', 
+    'street1a${i}', 'street2a${i}', 'citya${i}', 'pa${i}', 'posta${i}', 'couna${i}', 'phonea${i}', 'emaila${i}')`;
+
+    const res3 = await db.query(sqlString);
+  }
+}

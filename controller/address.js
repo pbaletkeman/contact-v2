@@ -109,11 +109,6 @@ async function updateRecord(address) {
   let sqlString = `UPDATE ${TABLE_NAME} set `;
   let sqlValues = [];
   let i = 0;
-  // if (address.addressId) {
-  //   i++;
-  //   sqlString += `"addressid" = $` + i + `,`;
-  //   sqlValues.push(address.addressId);
-  // }
   if (address.contactId) {
     i++;
     sqlString += `"contactid" = $` + i + `,`;
@@ -250,7 +245,7 @@ async function initTable() {
   return res.rows;
 }
 
-export { insertRecord, updateRecord, TABLE_NAME };
+export { insertRecord, updateRecord, initTable, TABLE_NAME };
 
 // async function seedTable() {
 //   for (let i = 0; i < 10; i++) {
